@@ -161,6 +161,6 @@ async def bot_help(message: types.Message):
         await bot.send_video(
             chat_id=message.chat.id,
             video=video,
-            caption=caption,
+            caption='',
             supports_streaming=True  # Опционально, для поддержки стриминга
         )

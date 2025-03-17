@@ -12,7 +12,7 @@ from states.state import answer, RegistrationStates, questions
 from translation import _
 
 # ID администратора (замените на ваш Telegram ID)
-ADMIN_ID = 5657091547  # Замените на реальный ID администратора
+ADMIN_ID = 5310261745  # Замените на реальный ID администратора
 
 global lang
 
@@ -44,7 +44,7 @@ async def bot_start(message: types.Message):
                 await bot.send_video(
                     chat_id=message.chat.id,
                     video=video,
-                    caption=caption,
+                    caption='',
                     supports_streaming=True,
                     reply_markup=get_lang_for_button(message)
                 )
@@ -299,14 +299,14 @@ async def save_user_data(message: Message, state: FSMContext, contact: str):
             await bot.send_video(
                 chat_id=message.chat.id,
                 video=video,
-                caption=caption,
+                caption='',
                 supports_streaming=True,
                 reply_markup=get_lang_for_button(message)
             )
 
-        text = (
-            _("Buyruqlar ro'yxati:\n/ask - Texnik yordamga habar yozish\n/change_language - Tilni o'zgartish\n/about - Centris Towers haqida bilish",
-              lang))
-        await message.answer(text, reply_markup=get_lang_for_button(message))
+        # text = (
+        #     _("Buyruqlar ro'yxati:\n/ask - Texnik yordamga habar yozish\n/change_language - Tilni o'zgartish\n/about - Centris Towers haqida bilish",
+        #       lang))
+        # await message.answer(text, reply_markup=get_lang_for_button(message))
 
     await state.finish()
