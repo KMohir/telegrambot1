@@ -111,6 +111,14 @@ class Database:
     def get_all_users(self):
         with self.conn:
             result = self.cursor.execute("SELECT user_id FROM users").fetchall()
-            return [row[0] for row in result]  # Возвращаем список user_id
+            return [row[0] for row in result]
 
+    def get_all_users_data(self):
+        with self.conn:
+            result = self.cursor.execute(
+                "SELECT user_id, lang, name, phone, address, status, employees FROM users"
+            ).fetchall()
+            return result
+
+# Создаем объект базы данных
 db = Database('databaseprotestim.db')

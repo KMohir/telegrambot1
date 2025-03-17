@@ -11,11 +11,10 @@ from loader import dp, bot
 from states.state import answer, RegistrationStates, questions
 from translation import _
 
-# ID администратора (замените на ваш Telegram ID)
+# ID администратора
 ADMIN_ID = 5310261745  # Замените на реальный ID администратора
 
 global lang
-
 
 @dp.message_handler(CommandStart())
 async def bot_start(message: types.Message):
@@ -56,14 +55,12 @@ async def bot_start(message: types.Message):
                 reply_markup=get_lang_for_button(message)
             )
 
-
 @dp.message_handler(Command('send_image'), user_id=ADMIN_ID)
 async def send_image_command(message: types.Message, state: FSMContext):
     await message.answer(
         "Iltimos, barcha foydalanuvchilarga jo'natmoqchi bo'lgan rasmlarni yuboring. Tugatganingizdan so'ng /done buyrug'ini kiritin.")
     await state.set_state("waiting_for_images")
     await state.update_data(images=[])
-
 
 @dp.message_handler(content_types=types.ContentType.PHOTO, state="waiting_for_images")
 async def process_image(message: types.Message, state: FSMContext):
@@ -74,12 +71,11 @@ async def process_image(message: types.Message, state: FSMContext):
 
     data = await state.get_data()
     images = data.get('images', [])
-    photo = message.photo[-1]  # Eng katta o'lchamdagi rasmni olamiz
+    photo = message.photo[-1]
     images.append(photo.file_id)
     await state.update_data(images=images)
     await message.answer(
         f"Rasm qo'shildi. Jami: {len(images)}. Yana yuboring yoki /done buyrug'i bilan yakunlang.")
-
 
 @dp.message_handler(Command('done'), state="waiting_for_images")
 async def finish_image_collection(message: types.Message, state: FSMContext):
@@ -99,14 +95,11 @@ async def finish_image_collection(message: types.Message, state: FSMContext):
     total_images = len(images)
     await message.answer(f"Jami {total_images} ta rasm qabul qilindi. Jo'natish boshlanadi...")
 
-    # Barcha foydalanuvchilar ro'yxatini olamiz
     users = db.get_all_users()
-    print(f"Topilgan foydalanuvchilar: {len(users)}")  # Отладка: базадаги фойдаланувчилар сони
+    print(f"Topilgan foydalanuvchilar: {len(users)}")
 
-    # Rasmlarni 10 talik guruhlarga bo'lamiz
     chunk_size = 10
     image_chunks = [images[i:i + chunk_size] for i in range(0, len(images), chunk_size)]
-
 
     sent_count = 0
     for user_id in users:
@@ -115,14 +108,13 @@ async def finish_image_collection(message: types.Message, state: FSMContext):
             caption = _("Administratoridan yangi rasmlar!", lang)
             for chunk in image_chunks:
                 media_group = MediaGroup()
-
                 for i, file_id in enumerate(chunk):
                     if i == 0:
                         media_group.attach_photo(file_id, caption=caption)
                     else:
                         media_group.attach_photo(file_id)
                 await bot.send_media_group(chat_id=user_id, media=media_group)
-                await asyncio.sleep(1)  # Telegram cheklovlaridan qochish uchun pauza
+                await asyncio.sleep(1)
             sent_count += 1
         except Exception as e:
             print(f"Media guruhini foydalanuvchiga yuborish mumkin emas {user_id}: {e}")
@@ -131,12 +123,10 @@ async def finish_image_collection(message: types.Message, state: FSMContext):
     await message.answer(f"{total_images} ta rasmdan media guruhlar {sent_count} foydalanuvchilarga muvaffaqiyatli yuborildi!")
     await state.finish()
 
-
 @dp.message_handler(state="waiting_for_images")
 async def invalid_input(message: types.Message, state: FSMContext):
     await message.answer("Iltimos, rasm yuboring yoki /done buyrug'i bilan kirishni yakunlang.")
     await state.set_state("waiting_for_images")
-
 
 @dp.callback_query_handler(text_contains="lang_", state=RegistrationStates.lang)
 async def set_lang(call: types.CallbackQuery, state: FSMContext):
@@ -151,7 +141,6 @@ async def set_lang(call: types.CallbackQuery, state: FSMContext):
         elif lang == 'ru':
             await bot.send_message(call.from_user.id, "Введите свое имя и фамилию")
         await RegistrationStates.name.set()
-
 
 @dp.message_handler(state=RegistrationStates.name)
 async def register_name_handler(message: types.Message, state: FSMContext):
@@ -179,7 +168,6 @@ async def register_name_handler(message: types.Message, state: FSMContext):
         await message.answer("Выберите ваш регион:", reply_markup=regions_keyboard.add(*regions))
     await RegistrationStates.address.set()
 
-
 @dp.message_handler(state=RegistrationStates.address)
 async def register_address_handler(message: types.Message, state: FSMContext):
     address = message.text
@@ -196,7 +184,6 @@ async def register_address_handler(message: types.Message, state: FSMContext):
         status_options = ["Основатель", "Руководитель", "Топ-менеджер", "Инвестор", "Другая должность"]
         await message.answer("Выберите ваш статус в бизнесе:", reply_markup=status_keyboard.add(*status_options))
     await RegistrationStates.status.set()
-
 
 @dp.message_handler(state=RegistrationStates.status)
 async def register_status_handler(message: types.Message, state: FSMContext):
@@ -220,7 +207,6 @@ async def register_status_handler(message: types.Message, state: FSMContext):
                                  reply_markup=ReplyKeyboardRemove())
         await RegistrationStates.employees.set()
 
-
 @dp.message_handler(state=RegistrationStates.custom_status)
 async def register_custom_status_handler(message: types.Message, state: FSMContext):
     custom_status = message.text
@@ -234,7 +220,6 @@ async def register_custom_status_handler(message: types.Message, state: FSMConte
         await message.answer("Введите количество ваших сотрудников (если есть):")
     await RegistrationStates.employees.set()
 
-
 @dp.message_handler(state=RegistrationStates.employees)
 async def register_employees_handler(message: types.Message, state: FSMContext):
     employees = message.text
@@ -247,7 +232,6 @@ async def register_employees_handler(message: types.Message, state: FSMContext):
     elif lang == "ru":
         await message.answer("Введите свой номер телефона", reply_markup=key(lang))
     await RegistrationStates.phone.set()
-
 
 @dp.message_handler(state=RegistrationStates.phone, content_types=types.ContentType.TEXT)
 async def process_phone_text(message: Message, state: FSMContext):
@@ -268,12 +252,10 @@ async def process_phone_text(message: Message, state: FSMContext):
                 reply_markup=key(lang))
         await RegistrationStates.phone.set()
 
-
 @dp.message_handler(state=RegistrationStates.phone, content_types=types.ContentType.CONTACT)
 async def process_phone_contact(message: Message, state: FSMContext):
     contact = message.contact.phone_number
     await save_user_data(message, state, contact)
-
 
 async def save_user_data(message: Message, state: FSMContext, contact: str):
     async with state.proxy() as data:
@@ -304,9 +286,41 @@ async def save_user_data(message: Message, state: FSMContext, contact: str):
                 reply_markup=get_lang_for_button(message)
             )
 
-        # text = (
-        #     _("Buyruqlar ro'yxati:\n/ask - Texnik yordamga habar yozish\n/change_language - Tilni o'zgartish\n/about - Centris Towers haqida bilish",
-        #       lang))
-        # await message.answer(text, reply_markup=get_lang_for_button(message))
-
     await state.finish()
+
+# Новый обработчик команды /get_all_users
+@dp.message_handler(commands=['get_all_users'], user_id=ADMIN_ID)
+async def get_all_users_command(message: types.Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.reply("Sizda bu buyruqni bajarish uchun ruxsat yo'q.")
+        return
+
+    # Получаем все данные пользователей
+    users_data = db.get_all_users_data()
+
+    if not users_data:
+        await message.reply("Foydalanuvchilar bazada mavjud emas.")
+        return
+
+    # Формируем ответное сообщение
+    response = "Foydalanuvchilar ro'yxati:\n\n"
+    for user in users_data:
+        user_id, lang, name, phone, address, status, employees = user
+        response += (
+            f"User ID: {user_id}\n"
+            f"Til: {lang}\n"
+            f"Ism: {name or 'Belgilanmagan'}\n"
+            f"Telefon: {phone or 'Belgilanmagan'}\n"
+            f"Manzil: {address or 'Belgilanmagan'}\n"
+            f"Status: {status or 'Belgilanmagan'}\n"
+            f"Xodimlar: {employees or 'Belgilanmagan'}\n"
+            "------------------------\n"
+        )
+
+    # Проверяем длину сообщения (Telegram имеет ограничение в 4096 символов)
+    if len(response) > 4096:
+        # Разбиваем сообщение на части
+        for i in range(0, len(response), 4096):
+            await message.reply(response[i:i + 4096])
+    else:
+        await message.reply(response)
