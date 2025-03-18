@@ -3,7 +3,10 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart, Command
 from aiogram.types import ParseMode, Message, ReplyKeyboardRemove, MediaGroup
 import asyncio
-
+import pandas as pd
+import io
+from aiogram import types
+from aiogram.types import InputFile
 from db import db
 from keyboards.default.reply import key, get_lang_for_button
 from keyboards.inline.support import langMenu, support_keyboard
@@ -12,7 +15,7 @@ from states.state import answer, RegistrationStates, questions
 from translation import _
 
 # ID администратора
-ADMIN_ID = 5310261745  # Замените на реальный ID администратора
+ADMIN_ID = 5657091547  # Замените на реальный ID администратора
 
 global lang
 
@@ -302,25 +305,21 @@ async def get_all_users_command(message: types.Message):
         await message.reply("Foydalanuvchilar bazada mavjud emas.")
         return
 
-    # Формируем ответное сообщение
-    response = "Foydalanuvchilar ro'yxati:\n\n"
-    for user in users_data:
-        user_id, lang, name, phone, address, status, employees = user
-        response += (
-            f"User ID: {user_id}\n"
-            f"Til: {lang}\n"
-            f"Ism: {name or 'Belgilanmagan'}\n"
-            f"Telefon: {phone or 'Belgilanmagan'}\n"
-            f"Manzil: {address or 'Belgilanmagan'}\n"
-            f"Status: {status or 'Belgilanmagan'}\n"
-            f"Xodimlar: {employees or 'Belgilanmagan'}\n"
-            "------------------------\n"
-        )
+    # Создаем DataFrame для Excel
+    df = pd.DataFrame(users_data, columns=[
+        'User ID', 'Til', 'Ism', 'Telefon', 'Manzil', 'Status', 'Xodimlar'
+    ])
 
-    # Проверяем длину сообщения (Telegram имеет ограничение в 4096 символов)
-    if len(response) > 4096:
-        # Разбиваем сообщение на части
-        for i in range(0, len(response), 4096):
-            await message.reply(response[i:i + 4096])
-    else:
-        await message.reply(response)
+    # Заменяем None на "Belgilanmagan"
+    df = df.fillna('Belgilanmagan')
+
+    # Создаем Excel-файл в памяти
+    excel_file = io.BytesIO()
+    df.to_excel(excel_file, index=False)
+    excel_file.seek(0)
+
+    # Отправляем Excel-файл
+    await message.reply_document(
+        InputFile(excel_file, filename="users_data.xlsx"),
+        caption="Foydalanuvchilar ro'yxati"
+    )
